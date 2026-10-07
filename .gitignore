@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# 虚拟环境
+.venv/
+venv/
+
+# 打包
+*.egg-info/
+build/
+dist/
+
+# 工具示例输出
+result.mlir
+
+# 模型与验证数据：公开范围未确认前不提交
+test/E2E/resnet50/
