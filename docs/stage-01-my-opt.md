@@ -8,17 +8,17 @@
 
 ## 1. 先看哪些文件
 
-| 文件 | 用途 |
-|---|---|
-| `tools/my_opt.py` | 主示例，也是之后各阶段继续复用的 opt 工具 |
-| `tools/exercises/stage01_context.py` | 短习题：Context、注册、Pass；不会破坏主工具 |
-| `test/E2E/mlir/stage01/00-empty.mlir` | 空 module 的解析打印 |
-| `test/E2E/mlir/stage01/01-add.mlir` | 函数参数、加法结果、返回值 |
-| `test/E2E/mlir/stage01/02-cse.mlir` | 两次相同加法均被使用，观察 CSE |
-| `test/E2E/mlir/stage01/03-dce.mlir` | 无用乘法、有用加法，观察 DCE |
-| `test/E2E/mlir/stage01/04-canonicalize.mlir` | 1+2 的编译期常量折叠 |
-| `test/E2E/mlir/stage01/05-invalid-syntax.mlir` | 故意引用未定义的 SSA 值 |
-| `test/E2E/mlir/stage01/06-invalid-verify.mlir` | 返回类型不符：解析成功、验证失败 |
+| 文件                                             | 用途                                        |
+| ------------------------------------------------ | ------------------------------------------- |
+| `tools/my_opt.py`                              | 主示例，也是之后各阶段继续复用的 opt 工具   |
+| `tools/exercises/stage01_context.py`           | 短习题：Context、注册、Pass；不会破坏主工具 |
+| `test/E2E/mlir/stage01/00-empty.mlir`          | 空 module 的解析打印                        |
+| `test/E2E/mlir/stage01/01-add.mlir`            | 函数参数、加法结果、返回值                  |
+| `test/E2E/mlir/stage01/02-cse.mlir`            | 两次相同加法均被使用，观察 CSE              |
+| `test/E2E/mlir/stage01/03-dce.mlir`            | 无用乘法、有用加法，观察 DCE                |
+| `test/E2E/mlir/stage01/04-canonicalize.mlir`   | 1+2 的编译期常量折叠                        |
+| `test/E2E/mlir/stage01/05-invalid-syntax.mlir` | 故意引用未定义的 SSA 值                     |
+| `test/E2E/mlir/stage01/06-invalid-verify.mlir` | 返回类型不符：解析成功、验证失败            |
 
 没有额外 expected 文件：每个输入注释已给预期，实际检查还验证了 IR 对象的结果与 uses。
 
@@ -87,22 +87,22 @@ python -c "import subprocess,sys; p=subprocess.run([sys.executable,'tools/my_opt
 5. **执行 Pass**：每个 `apply(ctx, module)` 后再次 verify，可选打印。
 6. **输出与诊断**：Printer 输出 IR，stderr 放错误和调试信息。
 
-Context 不是 IR 容器；ModuleOp 才是这次解析出的程序。Pass 类也不是一个 Operation。这里没有执行 add 函数：常量折叠是编译期转换，运行时传入 1、2 检查 3 留到 stage 5。
+Context 不是 IR 容器；ModuleOp 才是这次解析出的程序。Pass 类也不是一个 Operation。这里没有执行 add 函数：常量折叠是编译期转换，运行时传入 1、2 检查 3 留到 stage 7。
 
 ## 4. MLIR 目录和 C++ 接口对照
 
 下列 MLIR 路径以 llvm-project 根下的 `mlir/` 开始，是源码导航，不要求本地已下载；不同版本可能调整。
 
-| 当前 Python | MLIR C++ 对应 | 目录/差异 |
-|---|---|---|
-| `tools/my_opt.py` | `mlir-opt.cpp`、`MlirOptMain` | `mlir/tools/mlir-opt/*`、`mlir/lib/Tools/mlir-opt/*`；这里手写少量驱动逻辑 |
-| `Context()` | `MLIRContext` | `mlir/include/mlir/IR/MLIRContext.h`、`mlir/lib/IR/*` |
-| `ctx.load_dialect(...)` | `DialectRegistry::insert`、Context 加载 Dialect | `mlir/include/mlir/IR/DialectRegistry.h`；Python 不必额外创建一个 Registry 对象 |
-| `Parser(...).parse_module()` | `parseSourceFile<ModuleOp>` | `mlir/include/mlir/Parser/*`、`mlir/lib/Parser/*` |
-| `module.verify()` | `mlir::verify`、Operation 验证流程 | `mlir/include/mlir/IR/Verifier.h`、`mlir/lib/IR/Verifier.cpp` |
-| `PASSES` + 顺序 `apply` | Pass 注册、PassManager::addPass/run | `mlir/include/mlir/Pass/*`、`mlir/lib/Pass/*`；没有嵌套 pipeline、分析缓存与失效管理 |
-| `Printer.print_op` | Operation 打印 | `mlir/lib/IR/AsmPrinter.cpp` |
-| xDSL CSE/DCE/canonicalize | MLIR 通用优化/重写机制 | `mlir/lib/Transforms/*`；xDSL 是独立 Python 实现，并非调用 C++ Pass |
+| 当前 Python                    | MLIR C++ 对应                                     | 目录/差异                                                                                |
+| ------------------------------ | ------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `tools/my_opt.py`            | `mlir-opt.cpp`、`MlirOptMain`                 | `mlir/tools/mlir-opt/*`、`mlir/lib/Tools/mlir-opt/*`；这里手写少量驱动逻辑           |
+| `Context()`                  | `MLIRContext`                                   | `mlir/include/mlir/IR/MLIRContext.h`、`mlir/lib/IR/*`                                |
+| `ctx.load_dialect(...)`      | `DialectRegistry::insert`、Context 加载 Dialect | `mlir/include/mlir/IR/DialectRegistry.h`；Python 不必额外创建一个 Registry 对象        |
+| `Parser(...).parse_module()` | `parseSourceFile<ModuleOp>`                     | `mlir/include/mlir/Parser/*`、`mlir/lib/Parser/*`                                    |
+| `module.verify()`            | `mlir::verify`、Operation 验证流程              | `mlir/include/mlir/IR/Verifier.h`、`mlir/lib/IR/Verifier.cpp`                        |
+| `PASSES` + 顺序 `apply`    | Pass 注册、PassManager::addPass/run               | `mlir/include/mlir/Pass/*`、`mlir/lib/Pass/*`；没有嵌套 pipeline、分析缓存与失效管理 |
+| `Printer.print_op`           | Operation 打印                                    | `mlir/lib/IR/AsmPrinter.cpp`                                                           |
+| xDSL CSE/DCE/canonicalize      | MLIR 通用优化/重写机制                            | `mlir/lib/Transforms/*`；xDSL 是独立 Python 实现，并非调用 C++ Pass                    |
 
 `dce` 是本工具采用的 xDSL Pass 名，不声称 MLIR 有完全一样的独立命令行 Pass。当前 xDSL DCE 源码也注明部分内存副作用判断与 MLIR 存在区别。
 
@@ -114,7 +114,7 @@ Context 不是 IR 容器；ModuleOp 才是这次解析出的程序。Pass 类也
 普通 C++：
   .h 声明 → .cpp 编译成目标文件 → 链接目标文件/库 → 运行程序
 
-MLIR 自定义 Dialect（stage 3 对照讲解）：
+MLIR 自定义 Dialect（stage 5 对照讲解）：
   .td → mlir-tblgen 生成 .inc → .h/.cpp 引入 → 编译库
       → opt 链接库 → 程序运行时注册 Dialect 到 Context
 ```
@@ -141,7 +141,9 @@ python tools/exercises/stage01_context.py
 - **U2**：实例化 CSE，调用 apply，再 verify。完成后重复 addi 应合并。代码 TODO 留在练习脚本。
 
 <!-- #TODO[USER][stage01-U3] 分别移除 func/arith 注册观察错误；比较未定义 SSA 值与错误返回类型，写下错误发生在注册、解析还是验证。 -->
+
 <!-- #TODO[USER][stage01-U4] 修改 02-cse 的第二个 addi，让它不再与第一个等价，观察 CSE 是否仍合并并解释原因。 -->
+
 <!-- #TODO[USER][stage01-U5] 比较 --passes cse 与 --passes canonicalize,cse 在两个不同输入上的结果，指出每一步是否真的改变 IR。 -->
 
 公开版本保留这些 TODO 作为题目。你可以在自己的副本中填写实现、去掉标记并记录心得。它们不属于主示例的功能缺陷，运行主示例不需要先做完习题。
@@ -164,17 +166,17 @@ python tools/exercises/stage01_context.py
 
 在 Windows、Python 3.11、xDSL 0.71.0 环境实跑 CLI，并用一次性检查脚本重新解析输出，检查 op 与 operands，而不是只比较打印字符串。一次性脚本放在系统临时目录，不增加项目学习负担。代码采用跨平台 Python 接口；尚未在 Linux/macOS 实机验证。
 
-| 检查 | 实际结果 |
-|---|---|
-| 五个正确输入解析/验证/打印，再解析输出 | 通过 |
-| CSE 后只有一次 addi，muli 两个输入是同一个 SSA 对象 | 通过 |
-| DCE 删除无用 muli、保留有用 addi | 通过 |
-| canonicalize,cse,dce 按序运行，最终 constant 值为 3 | 通过 |
-| dump 只在 stderr，stdout 仍为可解析 IR | 通过 |
-| 未定义 SSA、错误返回类型、缺文件、未知/空 Pass 项 | 非零退出，无最终 IR |
-| 输入和 -o 指向同一路径 | 拒绝覆盖输入 |
-| -o 输出文件再交给 my-opt 读取 | 通过 |
-| 习题初始模板 | 给出填写提示，不影响主工具 |
+| 检查                                                | 实际结果                   |
+| --------------------------------------------------- | -------------------------- |
+| 五个正确输入解析/验证/打印，再解析输出              | 通过                       |
+| CSE 后只有一次 addi，muli 两个输入是同一个 SSA 对象 | 通过                       |
+| DCE 删除无用 muli、保留有用 addi                    | 通过                       |
+| canonicalize,cse,dce 按序运行，最终 constant 值为 3 | 通过                       |
+| dump 只在 stderr，stdout 仍为可解析 IR              | 通过                       |
+| 未定义 SSA、错误返回类型、缺文件、未知/空 Pass 项   | 非零退出，无最终 IR        |
+| 输入和 -o 指向同一路径                              | 拒绝覆盖输入               |
+| -o 输出文件再交给 my-opt 读取                       | 通过                       |
+| 习题初始模板                                        | 给出填写提示，不影响主工具 |
 
 这些是编译工具验收，不是模型推理或 runtime 执行测试。本阶段作为示例与习题一并提供；没有执行 C++ 程序或构建 MLIR。
 
